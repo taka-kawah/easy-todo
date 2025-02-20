@@ -5,5 +5,12 @@ import (
 )
 
 func main() {
-	db.GetDb()
+	dbInstance := db.ConnectToDb()
+	sqldb, err := dbInstance.DB()
+	if err != nil {
+		panic("Error Getting SQLInstance")
+	}
+	defer db.DisconnectToDb(sqldb)
+
+	db.CreateToDo(dbInstance, "ゴミ捨て")
 }
