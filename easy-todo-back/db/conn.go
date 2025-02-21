@@ -22,11 +22,11 @@ func getDbDsn() string {
 	dbname := os.Getenv("DB_NAME")
 	port := os.Getenv("DB_PORT")
 
-	return "host=" + host + " user=" + user + " password=" + password + " dbname=" + dbname + " port=" + port
+	return "host=" + host + " user=" + user + " password=" + password + " dbname=" + dbname + " port=" + port + " TimeZone=Asia/Tokyo sslmode=disable"
 }
 
 func ConnectToDb() *gorm.DB {
-	db, err := gorm.Open(postgres.Open(getDbDsn()))
+	db, err := gorm.Open(postgres.Open(getDbDsn()), &gorm.Config{PrepareStmt: true})
 	if err != nil {
 		panic("Error Connecting to PostgreSQL")
 	}

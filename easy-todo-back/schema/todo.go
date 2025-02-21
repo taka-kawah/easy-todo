@@ -11,10 +11,10 @@ import (
 type Todo struct {
 	Id        int64 `gorm:"primaryKey"`
 	Value     string
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 	IsDone    bool
-	DeleteAt  gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time       `gorm:"autoCreateTime"`
+	UpdatedAt time.Time       `gorm:"autoUpdateTime"`
+	DeleteAt  *gorm.DeletedAt `gorm:"index"`
 }
 
 func GetNewID() int64 {

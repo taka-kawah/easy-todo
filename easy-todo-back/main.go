@@ -2,6 +2,7 @@ package main
 
 import (
 	"easy-todo-back/db"
+	"log"
 )
 
 func main() {
@@ -11,6 +12,8 @@ func main() {
 		panic("Error Getting SQLInstance")
 	}
 	defer db.DisconnectToDb(sqldb)
-
-	db.CreateToDo(dbInstance, "ゴミ捨て")
+	recs := db.ReadToDo(dbInstance)
+	for _, rec := range recs {
+		log.Print(rec)
+	}
 }
