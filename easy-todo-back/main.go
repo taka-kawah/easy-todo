@@ -12,8 +12,7 @@ func main() {
 		panic("Error Getting SQLInstance")
 	}
 	defer db.DisconnectToDb(sqldb)
-	recs := db.ReadToDo(dbInstance)
-	for _, rec := range recs {
-		log.Print(rec)
-	}
+
+	rec := db.ReadSingleTodoById(dbInstance, 2633542081492844029)
+	log.Print(rec)
 }
