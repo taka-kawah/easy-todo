@@ -53,3 +53,12 @@ func CheckTodoById(db *gorm.DB, id int64) {
 	}
 	log.Print("Success Checking Todo Record Value!")
 }
+
+func DeleteTodoById(db *gorm.DB, id int64) {
+	var todos []schema.Todo
+	res := db.Delete(&todos, id)
+	if err := res.Error; err != nil {
+		panic(("Error Deleting Todo Record"))
+	}
+	log.Print("Success Deleting Todo Record Value!")
+}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"easy-todo-back/db"
-	"log"
 )
 
 func main() {
@@ -15,7 +14,5 @@ func main() {
 
 	targetId := 2633542081492844029
 
-	db.CheckTodoById(dbInstance, int64(targetId))
-	rec := db.ReadSingleTodoById(dbInstance, int64(targetId))
-	log.Print(rec)
+	db.DeleteTodoById(dbInstance, int64(targetId))
 }
