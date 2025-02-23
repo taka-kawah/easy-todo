@@ -35,3 +35,21 @@ func ReadSingleTodoById(db *gorm.DB, id int64) schema.Todo {
 	log.Print("Success Reading Single Todo Record!")
 	return todos[0]
 }
+
+func UpDateTodoValById(db *gorm.DB, id int64, newVal string) {
+	var todos []schema.Todo
+	res := db.Model(&todos).Where("id = ?", id).Update("Value", newVal)
+	if err := res.Error; err != nil {
+		panic(("Error Updating Todo Record"))
+	}
+	log.Print("Success Updating Todo Record Value!")
+}
+
+func CheckTodoById(db *gorm.DB, id int64) {
+	var todos []schema.Todo
+	res := db.Model(&todos).Where("id = ?", id).Update("is_done", gorm.Expr("NOT is_done"))
+	if err := res.Error; err != nil {
+		panic(("Error Checking Todo Record"))
+	}
+	log.Print("Success Checking Todo Record Value!")
+}

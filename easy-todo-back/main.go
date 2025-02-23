@@ -13,6 +13,9 @@ func main() {
 	}
 	defer db.DisconnectToDb(sqldb)
 
-	rec := db.ReadSingleTodoById(dbInstance, 2633542081492844029)
+	targetId := 2633542081492844029
+
+	db.CheckTodoById(dbInstance, int64(targetId))
+	rec := db.ReadSingleTodoById(dbInstance, int64(targetId))
 	log.Print(rec)
 }
