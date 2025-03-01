@@ -1,49 +1,64 @@
 package main
 
 import (
-	"easy-todo-back/db"
+	"easy-todo-back/dbConnection"
+	"easy-todo-back/schema"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	dbInstance := db.ConnectToDb()
-	sqldb, err := dbInstance.DB()
+	db, sqldb, err := dbConnection.ConnectToDb()
 	if err != nil {
-		panic("Error Getting SQLInstance")
+		log.Fatal(err)
+		return
 	}
-	defer db.DisconnectToDb(sqldb)
+	defer dbConnection.DisconnectToDb(sqldb)
+
+	toDoDriver := schema.NewToDoDriver(db)
 
 	r := gin.Default()
 
 	r.POST("/api/v1/addnote", func(ctx *gin.Context) {
 		val := ctx.Query("val")
-		db.CreateToDo(dbInstance, val)
+		if err := toDoDriver.CreateToDo(val); err != nil {
+			ctx.JSON(500, gin.H{"message": err})
+		}
 		ctx.JSON(200, gin.H{"message": "added!"})
 	})
 
 	r.GET("api/v1/alltodos", func(ctx *gin.Context) {
-		todos := db.ReadToDo(dbInstance)
+		todos, err := toDoDriver.ReadToDos()
+		if err != nil {
+			ctx.JSON(500, gin.H{"message": err})
+		}
 		ctx.JSON(200, todos)
 	})
 
 	r.GET("/api/v1/singletodo", func(ctx *gin.Context) {
 		key, err := strconv.ParseInt(ctx.Query("key"), 10, 64)
 		if err != nil {
-			ctx.JSON(500, gin.H{"message": "error"})
+			ctx.JSON(500, gin.H{"message": err})
 		}
-		todo := db.ReadSingleTodoById(dbInstance, key)
+		todo, err := toDoDriver.ReadSingleTodoById(key)
+		if err != nil {
+			ctx.JSON(500, gin.H{"message": err})
+		}
 		ctx.JSON(200, todo)
 	})
 
 	r.PUT("/api/v1/rewrite", func(ctx *gin.Context) {
 		key, err := strconv.ParseInt(ctx.Query("key"), 10, 64)
 		if err != nil {
-			ctx.JSON(500, gin.H{"message": "error"})
+			ctx.JSON(500, gin.H{"message": err})
 		}
 		newVal := ctx.Query("newVal")
-		db.UpDateTodoValById(dbInstance, key, newVal)
+		toDoDriver.UpdateTodoValById(key, newVal)
+		if err != nil {
+			ctx.JSON(500, gin.H{"message": err})
+		}
 		ctx.JSON(200, gin.H{"message": "updated!"})
 	})
 
@@ -52,7 +67,9 @@ func main() {
 		if err != nil {
 			ctx.JSON(500, gin.H{"message": "error"})
 		}
-		db.CheckTodoById(dbInstance, key)
+		if err := toDoDriver.ToggleTodoById(key); err != nil {
+			ctx.JSON(500, gin.H{"message": err})
+		}
 		ctx.JSON(200, gin.H{"message": "checked!"})
 	})
 
@@ -61,7 +78,9 @@ func main() {
 		if err != nil {
 			ctx.JSON(500, gin.H{"message": "error"})
 		}
-		db.DeleteTodoById(dbInstance, key)
+		if err := toDoDriver.DeleteTodoById(key); err != nil {
+			ctx.JSON(500, gin.H{"message": err})
+		}
 		ctx.JSON(200, gin.H{"message": "deleted!"})
 	})
 
