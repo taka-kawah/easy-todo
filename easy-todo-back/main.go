@@ -2,8 +2,10 @@ package main
 
 import (
 	"easy-todo-back/dbConnection"
+	"easy-todo-back/middleware"
 	"easy-todo-back/schema"
 	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -17,19 +19,45 @@ func main() {
 	}
 	defer dbConnection.DisconnectToDb(sqldb)
 
+	var ud *schema.UserDriver
 	toDoDriver := schema.NewToDoDriver(db)
 
-	r := gin.Default()
+	e := gin.Default()
+	r := e.Group("/api/v1")
+	r.POST("/SignUp", func(ctx *gin.Context) {
+		email := ctx.Query("email")
+		password := ctx.Query("password")
 
-	r.POST("/api/v1/addnote", func(ctx *gin.Context) {
+		var err error
+		ud, err = schema.NewUserDriver(db, email, password)
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		}
+	})
+
+	r.POST("/SignIn", func(ctx *gin.Context) {
+		email := ctx.Query("email")
+		middleware.LoginHandler(ctx)
+		var err error
+		ud, err = schema.FindUserDriverFromEmail(db, email)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		}
+	})
+
+	authorized := r.Group("/auth")
+	authorized.Use(middleware.AuthMiddleware())
+
+	authorized.POST("/addnote", func(ctx *gin.Context) {
 		val := ctx.Query("val")
-		if err := toDoDriver.CreateToDo(val); err != nil {
+		if err := toDoDriver.CreateToDo(val, ud.ID); err != nil {
 			ctx.JSON(500, gin.H{"message": err})
 		}
 		ctx.JSON(200, gin.H{"message": "added!"})
 	})
 
-	r.GET("api/v1/alltodos", func(ctx *gin.Context) {
+	authorized.GET("/alltodos", func(ctx *gin.Context) {
 		todos, err := toDoDriver.ReadToDos()
 		if err != nil {
 			ctx.JSON(500, gin.H{"message": err})
@@ -37,7 +65,7 @@ func main() {
 		ctx.JSON(200, todos)
 	})
 
-	r.GET("/api/v1/singletodo", func(ctx *gin.Context) {
+	authorized.GET("/singletodo", func(ctx *gin.Context) {
 		key, err := strconv.ParseInt(ctx.Query("key"), 10, 64)
 		if err != nil {
 			ctx.JSON(500, gin.H{"message": err})
@@ -49,7 +77,7 @@ func main() {
 		ctx.JSON(200, todo)
 	})
 
-	r.PUT("/api/v1/rewrite", func(ctx *gin.Context) {
+	authorized.PUT("/rewrite", func(ctx *gin.Context) {
 		key, err := strconv.ParseInt(ctx.Query("key"), 10, 64)
 		if err != nil {
 			ctx.JSON(500, gin.H{"message": err})
@@ -62,7 +90,7 @@ func main() {
 		ctx.JSON(200, gin.H{"message": "updated!"})
 	})
 
-	r.PUT("/api/v1/check", func(ctx *gin.Context) {
+	authorized.PUT("/check", func(ctx *gin.Context) {
 		key, err := strconv.ParseInt(ctx.Query("key"), 10, 64)
 		if err != nil {
 			ctx.JSON(500, gin.H{"message": "error"})
@@ -73,7 +101,7 @@ func main() {
 		ctx.JSON(200, gin.H{"message": "checked!"})
 	})
 
-	r.DELETE("/api/v1/delete", func(ctx *gin.Context) {
+	authorized.DELETE("/delete", func(ctx *gin.Context) {
 		key, err := strconv.ParseInt(ctx.Query("key"), 10, 64)
 		if err != nil {
 			ctx.JSON(500, gin.H{"message": "error"})
@@ -84,5 +112,5 @@ func main() {
 		ctx.JSON(200, gin.H{"message": "deleted!"})
 	})
 
-	r.Run()
+	e.Run()
 }

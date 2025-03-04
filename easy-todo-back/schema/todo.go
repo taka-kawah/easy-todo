@@ -12,6 +12,7 @@ import (
 type Todo struct {
 	Id        int64 `gorm:"primaryKey"`
 	Value     string
+	UserId    uint
 	IsDone    bool
 	CreatedAt time.Time       `gorm:"autoCreateTime"`
 	UpdatedAt time.Time       `gorm:"autoUpdateTime"`
@@ -23,15 +24,16 @@ type ToDoDriver struct {
 }
 
 func NewToDoDriver(db *gorm.DB) *ToDoDriver {
+	db.AutoMigrate(&Todo{})
 	return &ToDoDriver{db: db}
 }
 
-func (d *ToDoDriver) CreateToDo(value string) error {
+func (d *ToDoDriver) CreateToDo(value string, userId uint) error {
 	id, err := generateNewID()
 	if err != nil {
 		return err
 	}
-	todo := Todo{Id: id, Value: value, IsDone: false}
+	todo := Todo{Id: id, Value: value, UserId: userId, IsDone: false}
 	if err := d.db.Create(&todo).Error; err != nil {
 		return fmt.Errorf("failed to Connect New Todo Record: %w", err)
 	}
